@@ -6,7 +6,6 @@ Still in development
 ## How to run it
 
 ### Database
-Delete any previous database tables.
 Create a .env file at the root of the project,
 
 Set the database credentials using:
@@ -20,6 +19,9 @@ To start the database, run:
 ```
 sudo docker compose up -d 
 ```
+
+*If upgrading from a previous commit,
+delete any previous database tables to avoid migration conflicts
 ___
 
 ### Frontend
@@ -44,7 +46,8 @@ DB_USERNAME= //your database username goes here
 DB_PASSWORD= //your database password goes here
 ```
 This will allow the backend to connect to the database.
-Generating RSA Keys for JWT Encryption
+
+### Generating RSA Keys for JWT Encryption
 
 To generate the public and private keys needed for JWT token encryption, run the following commands:
 
