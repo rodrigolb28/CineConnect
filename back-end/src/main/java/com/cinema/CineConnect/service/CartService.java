@@ -17,9 +17,13 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    public CartService(CartRepository cartRepository, ProductRepository productRepository) {
+    private final com.cinema.CineConnect.repository.TicketRepository ticketRepository;
+
+    public CartService(CartRepository cartRepository, ProductRepository productRepository,
+            com.cinema.CineConnect.repository.TicketRepository ticketRepository) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @Transactional
@@ -47,14 +51,20 @@ public class CartService {
 
     @Transactional
     public void updateItemQuantity(UUID userId, UUID cartItemId, int quantity) {
-        UUID cartId = getOrCreateCartId(userId); // We need cartId to update price. Ideally pass it or fetch it.
-        // Optimization: Fetch cartId from cartItemId if not readily available, or just
-        // fetch user's cart.
-        // Since we have userId, we can get the cartId.
+        UUID cartId = getOrCreateCartId(userId);
 
         if (quantity <= 0) {
             cartRepository.removeItem(cartItemId);
         } else {
+            // Check if item is a ticket
+            com.cinema.CineConnect.model.CartItem item = cartRepository.getItem(cartItemId);
+            if (item != null && item.getProduct() instanceof com.cinema.CineConnect.model.Ticket) {
+                // Tickets cannot have quantity > 1
+                if (quantity > 1) {
+                    throw new IllegalArgumentException(
+                            "Não é possível adicionar mais de um ingresso para o mesmo assento.");
+                }
+            }
             cartRepository.updateItemQuantity(cartItemId, quantity);
         }
         cartRepository.updateCartPrice(cartId);
@@ -94,35 +104,45 @@ public class CartService {
     }
 
     private void addAddonsToItem(UUID cartItemId, List<UUID> addonIds) {
-        // This method currently interacts directly with the repository.
-        // To fully use the OO approach, we would load the CartItem, add addons to it,
-        // and save it.
-        // However, since we are using a repository pattern that might be SQL-based, we
-        // might need to stick to repository calls for persistence.
-        // But the suggestion was "CartItem class should handle its own addons".
-        // If CartItem is just a DTO/Entity used by JPA/JDBC, we can modify it in
-        // memory.
-
-        // For now, I will keep the repository call but acknowledge the OO improvement
-        // would be:
-        // CartItem item = cartRepository.findById(cartItemId);
-        // item.addAddon(addon);
-        // cartRepository.save(item);
-
-        // Since I don't want to rewrite the entire persistence layer right now, I will
-        // stick to the existing pattern
-        // but ensure the service uses the factory or model methods where possible.
-
-        // Actually, looking at the code: cartRepository.addAddon(cartItemId, addonId,
-        // 1, addon.price());
-        // This inserts into a database table.
-        // The OO refactoring is more about the Domain Model behavior.
-
         for (UUID addonId : addonIds) {
             ProductRecord addon = productRepository.findById(addonId);
             if (addon != null) {
                 cartRepository.addAddon(cartItemId, addonId, 1, addon.price());
             }
         }
+    }
+
+    @Transactional
+    public void addTicketToCart(UUID userId, Long sessionId, String seatNumber, BigDecimal price) {
+        // Validation 1: Check if seat is already occupied (bought)
+        List<String> occupiedSeats = ticketRepository.findOccupiedSeats(sessionId);
+        if (occupiedSeats.contains(seatNumber)) {
+            throw new IllegalArgumentException("O assento " + seatNumber + " já está ocupado.");
+        }
+
+        UUID cartId = getOrCreateCartId(userId);
+
+        // Validation 2: Check if seat is already in the cart
+        if (cartRepository.isSeatInCart(cartId, sessionId, seatNumber)) {
+            throw new IllegalArgumentException("O assento " + seatNumber + " já está no seu carrinho.");
+        }
+
+        // Create a new Ticket product
+        UUID productId = UUID.randomUUID();
+        // Assuming "Ticket" type exists in DB. If not, migration
+        // V1__createRolesAndPopulate.sql or similar should have it.
+        // Based on ProductFactory, type is "TICKET".
+        // Name can be "Ticket - Session X - Seat Y"
+        String name = "Ingresso - Sessão " + sessionId + " - Assento " + seatNumber;
+
+        com.cinema.CineConnect.model.Ticket ticket = new com.cinema.CineConnect.model.Ticket(
+                productId, sessionId, seatNumber, name, "Ticket", price);
+
+        // Persist the ticket product
+        productRepository.saveProduct(ticket);
+
+        // Add to cart
+        cartRepository.addItem(cartId, productId, 1, price);
+        cartRepository.updateCartPrice(cartId);
     }
 }

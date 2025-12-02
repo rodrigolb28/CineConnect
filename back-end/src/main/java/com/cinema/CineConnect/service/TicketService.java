@@ -25,8 +25,16 @@ public class TicketService {
 
     // Atualiza tickets/pedidos no banco de dados usando o sessionId do Stripe
     public void markTicketsAsPaid(String stripeSessionId) {
-        // TODO: buscar pedidos pelo stripeSessionId no seu DB e marcar como pago
-        System.out.println("Pagamento confirmado para sessão Stripe: " + stripeSessionId);
+        System.out.println("Processing payment for Stripe Session: " + stripeSessionId);
+        com.cinema.CineConnect.model.Purchase purchase = purchaseRepository
+                .retrievePurchaseByPaymentId(stripeSessionId);
+
+        if (purchase != null) {
+            System.out.println("Found purchase: " + purchase.getId());
+            confirmPurchase(purchase.getId());
+        } else {
+            System.out.println("No purchase found for Stripe Session: " + stripeSessionId);
+        }
     }
 
     public void confirmPurchase(java.util.UUID purchaseId) {
@@ -37,6 +45,16 @@ public class TicketService {
         if (purchase != null) {
             for (com.cinema.CineConnect.model.PurchaseItem item : purchase.getItems()) {
                 updateProductStock(item.getProductId(), item.getQuantity());
+
+                // Check if item is a Ticket and save it
+                com.cinema.CineConnect.model.DTO.ProductRecord productRecord = productRepository
+                        .findById(item.getProductId());
+                if (productRecord != null && "Ticket".equals(productRecord.type())) {
+                    // Use user ID as client name if available, or a placeholder
+                    String clientName = purchase.getUserId() != null ? purchase.getUserId().toString()
+                            : "Unknown Client";
+                    ticketRepository.saveTicket(productRecord.sessionId(), productRecord.seatNumber(), clientName);
+                }
 
                 if (item.getAddons() != null) {
                     for (com.cinema.CineConnect.model.PurchaseItem addon : item.getAddons()) {

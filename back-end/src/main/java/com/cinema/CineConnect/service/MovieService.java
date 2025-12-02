@@ -33,13 +33,12 @@ public class MovieService {
             rs.getString("genre"),
             rs.getInt("duration"),
             rs.getBigDecimal("rating"),
-            rs.getString("image_filename")
-    );
+            rs.getString("image_filename"));
 
     // CORREÇÃO: Injetando o Repository via construtor
     public MovieService(JdbcClient jdbcClient,
-                        MovieRepository movieRepository,
-                        @Value("${file.upload-dir}") String uploadDir) {
+            MovieRepository movieRepository,
+            @Value("${file.upload-dir}") String uploadDir) {
         this.jdbcClient = jdbcClient;
         this.movieRepository = movieRepository;
         this.rootLocation = Paths.get(uploadDir);
@@ -74,19 +73,18 @@ public class MovieService {
                         movie.genre(),
                         movie.duration(),
                         movie.rating(),
-                        uniqueFilename
-                )
+                        uniqueFilename)
                 .query(Integer.class)
                 .single();
 
         return new MovieRecord(
                 generatedId, movie.title(), movie.synopsis(), movie.genre(),
-                movie.duration(), movie.rating(), uniqueFilename
-        );
+                movie.duration(), movie.rating(), uniqueFilename);
     }
 
     public List<MovieRecord> findAll() {
-        // Dica: Poderia usar o repository aqui também: return movieRepository.findAll();
+        // Dica: Poderia usar o repository aqui também: return
+        // movieRepository.findAll();
         return jdbcClient.sql("SELECT * FROM movies").query(MOVIE_ROW_MAPPER).list();
     }
 

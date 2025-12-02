@@ -3,6 +3,7 @@ package com.cinema.CineConnect.model.DTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 public record PurchaseDetailsRecord(
         UUID purchaseId,
         UUID userId,
@@ -23,7 +24,5 @@ public record PurchaseDetailsRecord(
         String addonProductName,
         String addonProductImage,
         Integer addonQuantity,
-        BigDecimal addonPriceAtPurchase
-) {}
-
-
+        BigDecimal addonPriceAtPurchase) {
+}

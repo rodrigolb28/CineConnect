@@ -27,7 +27,8 @@ public class BuildItemListService {
             });
 
             // No items → continue
-            if (r.itemId() == null) continue;
+            if (r.itemId() == null)
+                continue;
 
             // --- ITEM ---
             // Find existing item or create a new one INSIDE the purchase (no separate map)
@@ -64,4 +65,3 @@ public class BuildItemListService {
     }
 
 }
-

@@ -39,7 +39,13 @@ public class StripeController {
             @RequestParam String successUrl,
             @RequestParam String cancelUrl) {
 
-        String checkoutUrl = stripeService.createCheckoutSession(cart, successUrl, cancelUrl);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userIdStr = authentication.getName();
+        UserRecordRoleName user = userRepository.findInfoById(UUID.fromString(userIdStr))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String checkoutUrl = stripeService.createCheckoutSession(cart, successUrl, cancelUrl,
+                UUID.fromString(user.id()));
         return ResponseEntity.ok(checkoutUrl);
     }
 

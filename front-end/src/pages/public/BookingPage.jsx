@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 
 const BookingPage = () => {
     const { sessionId } = useParams();
@@ -8,6 +8,7 @@ const BookingPage = () => {
 
     const [occupiedSeats, setOccupiedSeats] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
+    const [isProcessing, setIsProcessing] = useState(false);
     // REMOVIDO: const [clientName, setClientName] = useState("");
 
     // Definição da Sala: 5 Fileiras (A-E) x 8 Colunas
@@ -15,7 +16,7 @@ const BookingPage = () => {
     const cols = [1, 2, 3, 4, 5, 6, 7, 8];
 
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/tickets/occupied/${sessionId}`)
+        api.get(`/api/tickets/occupied/${sessionId}`)
             .then(res => setOccupiedSeats(res.data))
             .catch(err => console.error("Erro ao carregar assentos:", err));
     }, [sessionId]);
@@ -30,23 +31,34 @@ const BookingPage = () => {
         }
     };
 
-    const handlePurchase = async () => {
-        // REMOVIDO: Validação do nome
+    const handleAddToCart = async () => {
         if (selectedSeats.length === 0) return alert("Selecione pelo menos um assento.");
 
+        setIsProcessing(true);
+
         try {
-            // Enviando "Anônimo" já que removemos o input.
-            // Se seu backend permitir nulo, pode enviar null ou string vazia.
-            await axios.post('http://localhost:8080/api/tickets/book', {
-                sessionId: sessionId,
-                clientName: "Anônimo (App Minimalista)",
-                seats: selectedSeats
-            });
-            alert("Reserva confirmada!");
-            navigate('/');
+            // Para cada assento selecionado, adiciona ao carrinho
+            // Isso pode ser otimizado para enviar uma lista, mas o backend atual espera um por vez ou precisamos adaptar
+            // O backend aceita um item por vez no endpoint /items (modificado para TICKET)
+
+            // Vamos fazer um loop sequencial para garantir
+            for (const seat of selectedSeats) {
+                await api.post('/api/cart/items', {
+                    type: "TICKET",
+                    sessionId: Number(sessionId),
+                    seatNumber: seat,
+                    price: 25.00, // Preço fixo por enquanto ou vir da sessão
+                    quantity: 1
+                });
+            }
+
+            alert("Ingressos adicionados ao carrinho!");
+            navigate('/store'); // Redireciona para a loja/carrinho
         } catch (error) {
-            alert("Erro na compra: " + (error.response?.data || "Tente novamente."));
-            window.location.reload();
+            console.error(error);
+            alert("Erro ao adicionar ao carrinho: " + (error.response?.data || "Tente novamente."));
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -104,7 +116,7 @@ const BookingPage = () => {
                                 return (
                                     <button
                                         key={seatLabel}
-                                        disabled={isOccupied}
+                                        disabled={isOccupied || isProcessing}
                                         onClick={() => toggleSeat(seatLabel)}
                                         style={{
                                             width: '45px',
@@ -115,9 +127,10 @@ const BookingPage = () => {
                                             color: textColor,
                                             fontWeight: isSelected ? '600' : '400',
                                             fontSize: '0.9rem',
-                                            cursor: cursorStyle,
+                                            cursor: isOccupied || isProcessing ? 'not-allowed' : cursorStyle,
                                             transition: 'all 0.2s ease',
-                                            boxShadow: isSelected ? '0 4px 6px -1px rgba(37, 99, 235, 0.3)' : 'none'
+                                            boxShadow: isSelected ? '0 4px 6px -1px rgba(37, 99, 235, 0.3)' : 'none',
+                                            opacity: isProcessing ? 0.7 : 1
                                         }}
                                     >
                                         {seatLabel}
@@ -144,22 +157,22 @@ const BookingPage = () => {
                     {/* INPUT DE NOME REMOVIDO AQUI */}
 
                     <button
-                        onClick={handlePurchase}
-                        disabled={selectedSeats.length === 0}
+                        onClick={handleAddToCart}
+                        disabled={selectedSeats.length === 0 || isProcessing}
                         style={{
                             padding: '15px 40px',
-                            backgroundColor: selectedSeats.length === 0 ? '#ccc' : theme.buttonBg,
+                            backgroundColor: (selectedSeats.length === 0 || isProcessing) ? '#ccc' : theme.buttonBg,
                             color: 'white',
                             border: 'none',
                             borderRadius: '50px', // Botão estilo pílula
                             fontWeight: '600',
                             fontSize: '1rem',
-                            cursor: selectedSeats.length === 0 ? 'not-allowed' : 'pointer',
+                            cursor: (selectedSeats.length === 0 || isProcessing) ? 'not-allowed' : 'pointer',
                             transition: 'background-color 0.2s',
-                            boxShadow: selectedSeats.length === 0 ? 'none' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)'
+                            boxShadow: (selectedSeats.length === 0 || isProcessing) ? 'none' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)'
                         }}
                     >
-                        Confirmar Reserva
+                        {isProcessing ? 'Processando...' : 'Adicionar ao Carrinho'}
                     </button>
                 </div>
             </div>

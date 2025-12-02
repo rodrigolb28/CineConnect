@@ -10,7 +10,7 @@ public record SessionResponse(
         Long sessionId,
         LocalDateTime timeDate,
         String language,
-        Long movieId,       // Apenas o ID do filme é suficiente aqui
+        Long movieId, // Apenas o ID do filme é suficiente aqui
         CinemaRecord cinema,
-        TheaterRecord theater
-) {}
+        TheaterRecord theater) {
+}

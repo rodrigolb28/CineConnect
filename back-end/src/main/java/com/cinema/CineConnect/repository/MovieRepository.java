@@ -28,13 +28,13 @@ public class MovieRepository {
             rs.getString("image_filename") // O segredo está aqui! Lendo a coluna com underline
     );
 
-    public List<MovieRecord> findAll(){
+    public List<MovieRecord> findAll() {
         return jdbcClient.sql("SELECT * FROM movies")
                 .query(MOVIE_ROW_MAPPER) // Usando o mapper manual
                 .list();
     }
 
-    public Optional<MovieRecord> findByName(String name){
+    public Optional<MovieRecord> findByName(String name) {
         return jdbcClient.sql("SELECT * FROM movies WHERE name = :name")
                 .param("name", name)
                 .query(MOVIE_ROW_MAPPER)

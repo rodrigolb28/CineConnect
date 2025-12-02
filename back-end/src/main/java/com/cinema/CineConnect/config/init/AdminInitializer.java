@@ -21,8 +21,9 @@ public class AdminInitializer implements CommandLineRunner {
     private final AuthRepository authRepository;
 
     public AdminInitializer(UserRepository userRepository,
-                            RoleRepository roleRepository,
-                            BCryptPasswordEncoder passwordEncoder, BCryptPasswordEncoder bCryptPasswordEncoder, AuthRepository authRepository) {
+            RoleRepository roleRepository,
+            BCryptPasswordEncoder passwordEncoder, BCryptPasswordEncoder bCryptPasswordEncoder,
+            AuthRepository authRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
@@ -31,7 +32,8 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (authRepository.findByEmail("admin@example.com").isPresent()) return; // already exists
+        if (authRepository.findByEmail("admin@example.com").isPresent())
+            return; // already exists
         var roleId = roleRepository.findRoleID("Admin");
         if (roleId.isEmpty()) {
             throw new DataIntegrityViolationException("Role does not exist");

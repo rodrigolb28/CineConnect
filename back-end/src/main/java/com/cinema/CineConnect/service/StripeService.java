@@ -38,30 +38,70 @@ public class StripeService {
         Stripe.apiKey = stripeSecretKey;
     }
 
-    public String createCheckoutSession(List<ProductRecord> cart, String successUrl, String cancelUrl) {
+    public String createCheckoutSession(List<ProductRecord> cart, String successUrl, String cancelUrl, UUID userId) {
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
+        long totalAmount = 0;
 
+        // 1. Build Line Items and Calculate Total
         for (ProductRecord productRecord : cart) {
             Product product = ProductFactory.createProduct(productRecord);
+            long itemAmount = product.getPrice().multiply(new BigDecimal(100)).longValue();
+            totalAmount += itemAmount;
 
             // Item principal
             lineItems.add(buildLineItem(product));
 
             // Add-ons via polymorphism
             for (Product addOn : product.getInfo()) {
+                long addOnAmount = addOn.getPrice().multiply(new BigDecimal(100)).longValue();
+                totalAmount += addOnAmount;
                 lineItems.add(buildLineItem(addOn, "Add-on: "));
             }
         }
 
+        // 2. Create Pending Purchase
+        Purchase purchase = new Purchase(userId, null, BigDecimal.valueOf(totalAmount).divide(BigDecimal.valueOf(100)),
+                "PENDING");
+
+        // Populate Purchase Items (similar to createPaymentIntent)
+        for (ProductRecord productRecord : cart) {
+            Product product = ProductFactory.createProduct(productRecord);
+
+            PurchaseItem item = new PurchaseItem();
+            item.setProductId(productRecord.productId());
+            item.setQuantity(1);
+            item.setPriceAtPurchase(product.getPrice());
+
+            List<PurchaseItem> addOns = new ArrayList<>();
+            for (Product addOn : product.getInfo()) {
+                PurchaseItem addOnItem = new PurchaseItem();
+                addOnItem.setProductId(addOn.getId());
+                addOnItem.setQuantity(1);
+                addOnItem.setPriceAtPurchase(addOn.getPrice());
+                addOns.add(addOnItem);
+            }
+            item.setAddons(addOns);
+            purchase.addItem(item);
+        }
+
+        UUID purchaseId = purchaseRepository.save(purchase);
+
+        // 3. Create Stripe Session
         SessionCreateParams params = SessionCreateParams.builder()
                 .addAllLineItem(lineItems)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(successUrl)
+                .setSuccessUrl(successUrl + "&session_id={CHECKOUT_SESSION_ID}") // Append session_id to success URL
                 .setCancelUrl(cancelUrl)
+                .putMetadata("purchaseId", purchaseId.toString())
+                .putMetadata("userId", userId.toString())
                 .build();
 
         try {
             Session session = Session.create(params);
+
+            // 4. Update Purchase with Session ID (as paymentId)
+            purchaseRepository.updatePaymentId(purchaseId, session.getId());
+
             return session.getUrl(); // URL do Stripe Checkout
         } catch (StripeException e) {
             throw new RuntimeException("Erro ao criar Stripe Checkout Session", e);

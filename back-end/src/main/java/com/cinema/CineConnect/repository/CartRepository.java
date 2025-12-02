@@ -213,4 +213,64 @@ public class CartRepository {
                 .update();
     }
 
+    public boolean isSeatInCart(UUID cartId, Long sessionId, String seatNumber) {
+        Integer count = jdbcClient.sql("""
+                SELECT COUNT(*)
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.cart_id = :cartId
+                AND p.session_id = :sessionId
+                AND p.seat_number = :seatNumber
+                """)
+                .param("cartId", cartId)
+                .param("sessionId", sessionId)
+                .param("seatNumber", seatNumber)
+                .query(Integer.class)
+                .single();
+        return count != null && count > 0;
+    }
+
+    public CartItem getItem(UUID cartItemId) {
+        return jdbcClient
+                .sql("""
+                        SELECT ci.*, p.name as product_name, p.price as product_price, p.image_url as product_image, pt.name as product_type,
+                               p.session_id, p.seat_number
+                        FROM cart_items ci
+                        JOIN products p ON ci.product_id = p.id
+                        JOIN product_types pt ON p.type_id = pt.id
+                        WHERE ci.id = :id
+                        """)
+                .param("id", cartItemId)
+                .query((rs, rowNum) -> {
+                    CartItem item = new CartItem();
+                    item.setId(UUID.fromString(rs.getString("id")));
+                    item.setProductId(UUID.fromString(rs.getString("product_id")));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setPriceAtTime(rs.getBigDecimal("price_at_time"));
+
+                    String type = rs.getString("product_type");
+                    Product p;
+                    if ("Ticket".equalsIgnoreCase(type)) {
+                        p = new com.cinema.CineConnect.model.Ticket(
+                                UUID.fromString(rs.getString("product_id")),
+                                rs.getLong("session_id"),
+                                rs.getString("seat_number"),
+                                rs.getString("product_name"),
+                                type,
+                                rs.getBigDecimal("product_price"));
+                    } else {
+                        p = new com.cinema.CineConnect.model.FoodProduct(
+                                UUID.fromString(rs.getString("product_id")),
+                                rs.getString("product_name"),
+                                rs.getBigDecimal("product_price"),
+                                type,
+                                0, // Quantity unknown
+                                true, // Available unknown
+                                rs.getString("product_image"));
+                    }
+                    item.setProduct(p);
+                    return item;
+                })
+                .single();
+    }
 }

@@ -9,9 +9,10 @@ public class ProductFactory {
 
     public static Product createProduct(ProductRecord productRecord) {
         return switch (productRecord.type()) {
-            case "TICKET" -> new Ticket(
+            case "Ticket" -> new Ticket(
                     productRecord.productId(),
                     productRecord.sessionId(),
+                    productRecord.seatNumber(),
                     productRecord.name(),
                     productRecord.type(),
                     productRecord.price());

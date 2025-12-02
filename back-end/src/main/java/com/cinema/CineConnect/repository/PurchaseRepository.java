@@ -206,4 +206,43 @@ public class PurchaseRepository {
         return purchases.isEmpty() ? null : purchases.get(0);
     }
 
+    public Purchase retrievePurchaseByPaymentId(String paymentId) {
+        List<PurchaseDetailsRecord> records = jdbcClient.sql("""
+                    SELECT
+                        p.id AS purchaseId,
+                        p.user_id AS userId,
+                        p.payment_id AS paymentId,
+                        p.total_amount AS totalAmount,
+                        p.status AS status,
+                        p.created_at AS createdAt,
+
+                        i.id AS itemId,
+                        i.product_id AS itemProductId,
+                        pi.name AS itemProductName,
+                        pi.image_url AS itemProductImage,
+                        i.quantity AS itemQuantity,
+                        i.price_at_purchase AS itemPriceAtPurchase,
+
+                        a.id AS addonId,
+                        a.product_id AS addonProductId,
+                        pa.name AS addonProductName,
+                        pa.image_url AS addonProductImage,
+                        a.quantity AS addonQuantity,
+                        a.price_at_purchase AS addonPriceAtPurchase
+
+                    FROM purchases p
+                    LEFT JOIN purchase_items i ON i.purchase_id = p.id
+                    LEFT JOIN products pi ON pi.id = i.product_id
+                    LEFT JOIN purchase_addons a ON a.purchase_item_id = i.id
+                    LEFT JOIN products pa ON pa.id = a.product_id
+                    WHERE p.payment_id = :paymentId
+                """)
+                .param("paymentId", paymentId)
+                .query(PurchaseDetailsRecord.class)
+                .list();
+
+        List<Purchase> purchases = BuildItemListService.buildListPurchases(records);
+        return purchases.isEmpty() ? null : purchases.get(0);
+    }
+
 }

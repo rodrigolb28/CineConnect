@@ -1,9 +1,23 @@
-import { Drawer, ScrollArea, Stack, Group, Text, Button, ActionIcon, Image, Divider, Box } from '@mantine/core';
+import { useState } from 'react';
+import { Drawer, ScrollArea, Stack, Group, Text, Button, ActionIcon, Image, Divider, Box, Loader } from '@mantine/core';
 import { IconTrash, IconMinus, IconPlus } from '@tabler/icons-react';
 import { useCart } from "../context/CartContext";
 
 function CartSidebar({ opened, onClose }) {
     const { cart, updateQuantity, removeFromCart, getTotalPrice } = useCart();
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleUpdateQuantity = async (itemId, newQuantity) => {
+        setIsProcessing(true);
+        await updateQuantity(itemId, newQuantity);
+        setIsProcessing(false);
+    };
+
+    const handleRemoveFromCart = async (itemId) => {
+        setIsProcessing(true);
+        await removeFromCart(itemId);
+        setIsProcessing(false);
+    };
 
     return (
         <Drawer
@@ -46,7 +60,7 @@ function CartSidebar({ opened, onClose }) {
                                             </Box>
                                         )}
                                     </div>
-                                    <ActionIcon color="red" variant="subtle" onClick={() => removeFromCart(item.id)}>
+                                    <ActionIcon color="red" variant="subtle" onClick={() => handleRemoveFromCart(item.id)} disabled={isProcessing}>
                                         <IconTrash size={16} />
                                     </ActionIcon>
                                 </Group>
@@ -56,7 +70,8 @@ function CartSidebar({ opened, onClose }) {
                                         <ActionIcon
                                             size="sm"
                                             variant="default"
-                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                            disabled={isProcessing}
                                         >
                                             <IconMinus size={12} />
                                         </ActionIcon>
@@ -64,7 +79,8 @@ function CartSidebar({ opened, onClose }) {
                                         <ActionIcon
                                             size="sm"
                                             variant="default"
-                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                            disabled={isProcessing}
                                         >
                                             <IconPlus size={12} />
                                         </ActionIcon>

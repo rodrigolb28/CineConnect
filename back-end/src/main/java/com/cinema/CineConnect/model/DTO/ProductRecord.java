@@ -11,7 +11,8 @@ public record ProductRecord(
         BigDecimal price,
         int quantity,
         boolean available,
-        UUID sessionId,
+        Long sessionId,
         String imageUrl,
-        List<ProductRecord> addOns) {
+        List<ProductRecord> addOns,
+        String seatNumber) {
 }

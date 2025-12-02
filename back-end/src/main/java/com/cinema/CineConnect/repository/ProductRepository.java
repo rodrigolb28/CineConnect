@@ -55,7 +55,8 @@ public class ProductRepository {
     private List<ProductRecord> getAddonsForProduct(UUID productId) {
         return jdbcClient.sql("""
                     SELECT p.id as productId, p.name, pt.name as type, p.price, image_url, p.quantity, p.available,
-                           CAST(NULL AS UUID) as sessionId,
+                           CAST(NULL AS BIGINT) as sessionId,
+                           CAST(NULL AS varchar) as seatNumber,
                            CAST(NULL AS varchar) as addOns
                     FROM product_addons pa
                     JOIN products p ON pa.addon_id = p.id
@@ -70,17 +71,19 @@ public class ProductRepository {
     public List<ProductRecord> findAll() {
         List<ProductRecord> products = jdbcClient.sql("""
                     SELECT p.id as productId, p.name, pt.name as type, p.price, image_url, p.quantity, p.available,
-                           CAST(NULL AS UUID) as sessionId,
+                           p.session_id as sessionId,
+                           p.seat_number as seatNumber,
                            CAST(NULL AS varchar) as addOns
                     FROM products p
                     JOIN product_types pt ON p.type_id = pt.id
+                    WHERE pt.name <> 'Ticket'
                 """)
                 .query(ProductRecord.class)
                 .list();
 
         return products.stream().map(p -> new ProductRecord(
                 p.productId(), p.name(), p.type(), p.price(), p.quantity(), p.available(), p.sessionId(), p.imageUrl(),
-                getAddonsForProduct(p.productId()))).toList();
+                getAddonsForProduct(p.productId()), p.seatNumber())).toList();
     }
 
     public Integer getQuantityById(UUID productId) {
@@ -119,7 +122,8 @@ public class ProductRepository {
     public List<ProductRecord> findProductsByType(String typeName) {
         List<ProductRecord> products = jdbcClient.sql("""
                     SELECT p.id as productId, p.name, pt.name as type, p.price, image_url, p.quantity, p.available,
-                           CAST(NULL AS UUID) as sessionId,
+                           p.session_id as sessionId,
+                           p.seat_number as seatNumber,
                            CAST(NULL AS varchar) as addOns
                     FROM products p
                     JOIN product_types pt ON p.type_id = pt.id
@@ -131,13 +135,14 @@ public class ProductRepository {
 
         return products.stream().map(p -> new ProductRecord(
                 p.productId(), p.name(), p.type(), p.price(), p.quantity(), p.available(), p.sessionId(), p.imageUrl(),
-                getAddonsForProduct(p.productId()))).toList();
+                getAddonsForProduct(p.productId()), p.seatNumber())).toList();
     }
 
     public ProductRecord findById(UUID id) {
         ProductRecord p = jdbcClient.sql("""
                     SELECT p.id as productId, p.name, pt.name as type, p.price, image_url, p.quantity, p.available,
-                           CAST(NULL AS UUID) as sessionId,
+                           p.session_id as sessionId,
+                           p.seat_number as seatNumber,
                            CAST(NULL AS varchar) as addOns
                     FROM products p
                     JOIN product_types pt ON p.type_id = pt.id
@@ -149,7 +154,39 @@ public class ProductRepository {
 
         return new ProductRecord(
                 p.productId(), p.name(), p.type(), p.price(), p.quantity(), p.available(), p.sessionId(), p.imageUrl(),
-                getAddonsForProduct(p.productId()));
+                getAddonsForProduct(p.productId()), p.seatNumber());
+    }
+
+    public void saveProduct(Product product) {
+        // First get type_id
+        UUID typeId = jdbcClient.sql("SELECT id FROM product_types WHERE name = :type")
+                .param("type", product.getType())
+                .query(UUID.class)
+                .single();
+
+        Long sessionId = null;
+        String seatNumber = null;
+
+        if (product instanceof com.cinema.CineConnect.model.Ticket ticket) {
+            sessionId = ticket.getSessionId();
+            seatNumber = ticket.getSeatNumber();
+        }
+
+        jdbcClient
+                .sql("""
+                            INSERT INTO products (id, name, type_id, price, quantity, available, image_url, session_id, seat_number)
+                            VALUES (:id, :name, :typeId, :price, :quantity, :available, :imageUrl, :sessionId, :seatNumber)
+                        """)
+                .param("id", product.getId())
+                .param("name", product.getName())
+                .param("typeId", typeId)
+                .param("price", product.getPrice())
+                .param("quantity", product.getQuantity())
+                .param("available", product.isAvailable())
+                .param("imageUrl", product.getImageUrl())
+                .param("sessionId", sessionId)
+                .param("seatNumber", seatNumber)
+                .update();
     }
 
     public List<TypeCount> listTypesWithCount() {

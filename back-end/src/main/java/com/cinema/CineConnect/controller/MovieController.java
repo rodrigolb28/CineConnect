@@ -26,8 +26,7 @@ public class MovieController {
     @PostMapping
     public ResponseEntity<MovieRecord> createMovie(
             @RequestPart("movie") MovieRecord movie,
-            @RequestPart("file") MultipartFile file
-    ) {
+            @RequestPart("file") MultipartFile file) {
         try {
             MovieRecord savedMovie = movieService.saveMovieWithImage(movie, file);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedMovie);

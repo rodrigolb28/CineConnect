@@ -21,13 +21,13 @@ public class RegistrationService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public RegistrationService(AuthRepository authRepository, RoleRepository roleRepository, UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public RegistrationService(AuthRepository authRepository, RoleRepository roleRepository,
+            UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.authRepository = authRepository;
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
-
 
     public Boolean verifyIfUserExists(String email) {
         return authRepository.findByEmail(email).isEmpty();
@@ -39,21 +39,18 @@ public class RegistrationService {
                 bCryptPasswordEncoder.encode(registrationRequestRecord.password()),
                 registrationRequestRecord.email(),
                 "Client",
-                registrationRequestRecord.birth_date()
-        );
-        if(!(verifyIfUserExists(registrationRequestRecord.email()))){
+                registrationRequestRecord.birth_date());
+        if (!(verifyIfUserExists(registrationRequestRecord.email()))) {
             throw new DataIntegrityViolationException("An user with this email already exists");
         }
         var roleId = roleRepository.findRoleID(client.getRole());
-        if(roleId.isEmpty()){
+        if (roleId.isEmpty()) {
             throw new DataIntegrityViolationException("Role does not exist");
         }
         userRepository.saveUser(client, roleId.get());
     }
 
-
-
-    private User createUserObject(AdminRegistrationRequestRecord adminRegistrationRequestRecord){
+    private User createUserObject(AdminRegistrationRequestRecord adminRegistrationRequestRecord) {
 
         return switch (adminRegistrationRequestRecord.role()) {
             case "Client" -> new Client(
@@ -61,8 +58,7 @@ public class RegistrationService {
                     bCryptPasswordEncoder.encode(adminRegistrationRequestRecord.password()),
                     adminRegistrationRequestRecord.email(),
                     adminRegistrationRequestRecord.role(),
-                    adminRegistrationRequestRecord.birth_date()
-            );
+                    adminRegistrationRequestRecord.birth_date());
             case "Admin" -> new Admin(
                     adminRegistrationRequestRecord.name(),
                     bCryptPasswordEncoder.encode(adminRegistrationRequestRecord.password()),
@@ -70,14 +66,13 @@ public class RegistrationService {
                     adminRegistrationRequestRecord.role(),
                     adminRegistrationRequestRecord.birth_date()
 
-            );
+                );
             case "Employee" -> new Employee(
                     adminRegistrationRequestRecord.name(),
                     bCryptPasswordEncoder.encode(adminRegistrationRequestRecord.password()),
                     adminRegistrationRequestRecord.email(),
                     adminRegistrationRequestRecord.role(),
-                    adminRegistrationRequestRecord.birth_date()
-            );
+                    adminRegistrationRequestRecord.birth_date());
             case "Cashier" -> new Cashier(
                     adminRegistrationRequestRecord.name(),
                     bCryptPasswordEncoder.encode(adminRegistrationRequestRecord.password()),
@@ -85,7 +80,7 @@ public class RegistrationService {
                     adminRegistrationRequestRecord.role(),
                     adminRegistrationRequestRecord.birth_date()
 
-            );
+                );
             case "Manager" -> new Manager(
                     adminRegistrationRequestRecord.name(),
                     bCryptPasswordEncoder.encode(adminRegistrationRequestRecord.password()),
@@ -93,24 +88,22 @@ public class RegistrationService {
                     adminRegistrationRequestRecord.role(),
                     adminRegistrationRequestRecord.birth_date()
 
-            );
+                );
             default -> throw new IllegalArgumentException("Invalid role");
         };
     }
 
-
     public void adminCreateAndSaveUser(AdminRegistrationRequestRecord adminRegistrationRequestRecord) {
         var user = createUserObject(adminRegistrationRequestRecord);
 
-        if(!(verifyIfUserExists(adminRegistrationRequestRecord.email()))){
+        if (!(verifyIfUserExists(adminRegistrationRequestRecord.email()))) {
             throw new DataIntegrityViolationException("An user with this email already exists");
         }
         var roleId = roleRepository.findRoleID(user.getRole());
-        if(roleId.isEmpty()){
+        if (roleId.isEmpty()) {
             throw new DataIntegrityViolationException("Role does not exist");
         }
         userRepository.saveUser(user, roleId.get());
-
 
     }
 }

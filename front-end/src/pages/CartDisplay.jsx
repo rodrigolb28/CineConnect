@@ -14,8 +14,8 @@ import {
     Table
 } from '@mantine/core';
 import { IconShoppingCart } from '@tabler/icons-react';
-import {CartProvider, useCart} from "../context/CartContext";
-import {Tab} from "@material-tailwind/react";
+import { CartProvider, useCart } from "../context/CartContext";
+import { Tab } from "@material-tailwind/react";
 
 function CartDisplay() {
     const { cart } = useCart();

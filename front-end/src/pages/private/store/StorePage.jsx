@@ -9,6 +9,7 @@ import CartSidebar from '../../../components/CartSidebar';
 function StorePage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
     const { addToCart, cart } = useCart();
 
     // Addon Modal State
@@ -36,19 +37,23 @@ function StorePage() {
         fetchData();
     }, []);
 
-    const handleAddToCartClick = (product) => {
+    const handleAddToCartClick = async (product) => {
         if (product.type === 'Food') {
             setSelectedProduct(product);
             setSelectedAddons([]);
             open();
         } else {
-            addToCart(product);
+            setIsProcessing(true);
+            await addToCart(product);
+            setIsProcessing(false);
         }
     };
 
-    const confirmAddToCart = () => {
+    const confirmAddToCart = async () => {
         if (selectedProduct) {
-            addToCart(selectedProduct, 1, selectedAddons);
+            setIsProcessing(true);
+            await addToCart(selectedProduct, 1, selectedAddons);
+            setIsProcessing(false);
             close();
             setSelectedProduct(null);
             setSelectedAddons([]);
@@ -110,11 +115,12 @@ function StorePage() {
                             fullWidth
                             mt="md"
                             radius="md"
-                            leftSection={<IconShoppingCart size={18} />}
+                            leftSection={!isProcessing && <IconShoppingCart size={18} />}
                             onClick={() => handleAddToCartClick(product)}
-                            disabled={!product.available}
+                            disabled={!product.available || isProcessing}
+                            loading={isProcessing && product.type !== 'Food'} // Show loader only for direct add (non-food or if logic changes)
                         >
-                            {product.available ? 'Add to Cart' : 'Unavailable'}
+                            {product.available ? (isProcessing && product.type !== 'Food' ? 'Adding...' : 'Add to Cart') : 'Unavailable'}
                         </Button>
                     </Card>
                 ))}
@@ -131,7 +137,7 @@ function StorePage() {
                             onChange={() => toggleAddon(addon.productId)}
                         />
                     ))}
-                    <Button fullWidth mt="md" onClick={confirmAddToCart}>
+                    <Button fullWidth mt="md" onClick={confirmAddToCart} loading={isProcessing} disabled={isProcessing}>
                         Confirm & Add to Cart
                     </Button>
                 </Stack>

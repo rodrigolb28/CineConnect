@@ -1,7 +1,7 @@
 package com.cinema.CineConnect.controller;
 
 import com.cinema.CineConnect.model.Cart;
-import com.cinema.CineConnect.model.User;
+
 import com.cinema.CineConnect.repository.UserRepository;
 import com.cinema.CineConnect.service.CartService;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +63,20 @@ public class CartController {
         String productIdStr = (String) payload.get("productId");
         Integer quantity = (Integer) payload.get("quantity");
         List<String> addonIdsStr = (List<String>) payload.get("addonIds");
+
+        if (productIdStr == null && !payload.containsKey("type")) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if ("TICKET".equals(payload.get("type"))) {
+            Long sessionId = ((Number) payload.get("sessionId")).longValue();
+            String seatNumber = (String) payload.get("seatNumber");
+            Double priceDouble = ((Number) payload.get("price")).doubleValue();
+            java.math.BigDecimal price = java.math.BigDecimal.valueOf(priceDouble);
+
+            cartService.addTicketToCart(uuid, sessionId, seatNumber, price);
+            return ResponseEntity.ok().build();
+        }
 
         if (productIdStr == null || quantity == null) {
             return ResponseEntity.badRequest().build();
