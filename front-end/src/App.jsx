@@ -16,6 +16,7 @@ import CartDisplay from "./pages/CartDisplay";
 import Purchases from "./pages/private/Purchases";
 import MovieDetails from "./components/MovieDetails";
 import BookingPage from "./pages/public/BookingPage";
+import CreateMovie from "./pages/private/Admin/CreateMovie";
 
 function App() {
   const [count, setCount] = useState(0)
@@ -34,9 +35,13 @@ function App() {
         <Route path="/user/purchases" element={<Layout><Purchases /></Layout>}></Route>
 
         {/* Movies & Booking */}
-        <Route path="/movie/:id" element={<MovieDetails />} />
-        <Route path="/booking/:sessionId" element={<BookingPage />} />
+        {/* Movies & Booking */}
+        <Route path="/movie/:id" element={<Layout><MovieDetails /></Layout>} />
+        <Route path="/booking/:sessionId" element={<Layout><BookingPage /></Layout>} />
 
+        {/* Admin Routes */}
+        <Route path="/admin/dashboard" element={<Layout><AdminDashboard /></Layout>} />
+        <Route path="/admin/create-movie" element={<Layout><CreateMovie /></Layout>} />
 
       </Routes>
     </Router>

@@ -59,12 +59,11 @@ export function HeaderSimples() {
 
         {/* Links de Navegação */}
         <Group gap={0} justify="flex-center" wrap="nowrap" className="hidden sm:flex">
-          <Button variant="subtle">
-            <a href="#" className="text-gray-500 transition hover:text-gray-500/75" onClick={gotoStart}>Movies</a>
+          <Button variant="subtle" onClick={gotoStart} className="text-gray-500 transition hover:text-gray-500/75">
+            Movies
           </Button>
-          <Button variant="subtle">
-            <a href="#" className="text-gray-500 transition hover:text-gray-500/75" onClick={gotoStore}>Store</a>
-
+          <Button variant="subtle" onClick={gotoStore} className="text-gray-500 transition hover:text-gray-500/75">
+            Store
           </Button>
         </Group>
 

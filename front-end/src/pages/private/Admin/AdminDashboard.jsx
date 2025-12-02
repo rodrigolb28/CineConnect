@@ -34,6 +34,7 @@ function AdminDashboard() {
                     <div className="flex justify-between items-center">
                         <h2>Admin Dashboard</h2>
                         <Button onClick={goToPurchases}>My Purchases</Button>
+                        <Button onClick={() => nav("/admin/create-movie")} ml="md">Create Movie</Button>
                     </div>
                 </Card>
 
