@@ -37,31 +37,55 @@ public class TicketService {
         }
     }
 
+    @Transactional
     public void confirmPurchase(java.util.UUID purchaseId) {
         System.out.println("Confirming purchase: " + purchaseId);
-        purchaseRepository.updateStatus(purchaseId, "PAID");
 
-        com.cinema.CineConnect.model.Purchase purchase = purchaseRepository.retrievePurchaseById(purchaseId);
-        if (purchase != null) {
-            for (com.cinema.CineConnect.model.PurchaseItem item : purchase.getItems()) {
-                updateProductStock(item.getProductId(), item.getQuantity());
+        try {
+            purchaseRepository.updateStatus(purchaseId, "PAID");
+            System.out.println("Successfully updated purchase status to PAID for: " + purchaseId);
 
-                // Check if item is a Ticket and save it
-                com.cinema.CineConnect.model.DTO.ProductRecord productRecord = productRepository
-                        .findById(item.getProductId());
-                if (productRecord != null && "Ticket".equals(productRecord.type())) {
-                    // Use user ID as client name if available, or a placeholder
-                    String clientName = purchase.getUserId() != null ? purchase.getUserId().toString()
-                            : "Unknown Client";
-                    ticketRepository.saveTicket(productRecord.sessionId(), productRecord.seatNumber(), clientName);
-                }
+            com.cinema.CineConnect.model.Purchase purchase = purchaseRepository.retrievePurchaseById(purchaseId);
+            if (purchase != null) {
+                System.out.println("Processing " + purchase.getItems().size() + " items for purchase: " + purchaseId);
 
-                if (item.getAddons() != null) {
-                    for (com.cinema.CineConnect.model.PurchaseItem addon : item.getAddons()) {
-                        updateProductStock(addon.getProductId(), addon.getQuantity());
+                for (com.cinema.CineConnect.model.PurchaseItem item : purchase.getItems()) {
+                    try {
+                        updateProductStock(item.getProductId(), item.getQuantity());
+                        System.out.println("Updated stock for product: " + item.getProductId());
+
+                        // Check if item is a Ticket and save it
+                        com.cinema.CineConnect.model.DTO.ProductRecord productRecord = productRepository
+                                .findById(item.getProductId());
+                        if (productRecord != null && "Ticket".equals(productRecord.type())) {
+                            // Use user ID as client name if available, or a placeholder
+                            String clientName = purchase.getUserId() != null ? purchase.getUserId().toString()
+                                    : "Unknown Client";
+                            ticketRepository.saveTicket(productRecord.sessionId(), productRecord.seatNumber(),
+                                    clientName);
+                            System.out.println("Saved ticket for session: " + productRecord.sessionId() + ", seat: "
+                                    + productRecord.seatNumber());
+                        }
+
+                        if (item.getAddons() != null) {
+                            for (com.cinema.CineConnect.model.PurchaseItem addon : item.getAddons()) {
+                                updateProductStock(addon.getProductId(), addon.getQuantity());
+                                System.out.println("Updated stock for addon: " + addon.getProductId());
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error processing item " + item.getProductId() + ": " + e.getMessage());
+                        e.printStackTrace();
+                        // Continue processing other items
                     }
                 }
+            } else {
+                System.err.println("Purchase not found: " + purchaseId);
             }
+        } catch (Exception e) {
+            System.err.println("Error confirming purchase " + purchaseId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Re-throw to trigger transaction rollback
         }
     }
 

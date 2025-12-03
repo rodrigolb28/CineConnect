@@ -27,12 +27,12 @@ export function PaymentPage() {
             try {
                 setIsLoading(true);
                 // Map cart to ProductRecord format expected by backend
-                // Map cart to ProductRecord format expected by backend
                 const productRecords = cart.map(item => ({
                     productId: item.product.id,
                     name: item.product.name,
                     type: item.product.type,
                     price: item.product.price,
+                    quantity: item.quantity,
                     sessionId: item.product.sessionId,
                     imageUrl: item.product.imageUrl,
                     addOns: item.addons ? item.addons.map(addon => ({
@@ -93,6 +93,9 @@ export function PaymentPage() {
                                 <div>
                                     <h3 className="font-medium">{item.product.name}</h3>
                                     <p className="text-gray-500 text-sm">{item.product.type}</p>
+                                    {item.quantity > 1 && (
+                                        <p className="text-gray-600 text-sm">Quantity: {item.quantity}</p>
+                                    )}
                                     {item.addons && item.addons.length > 0 && (
                                         <div className="text-sm text-gray-500 mt-1">
                                             Add-ons: {item.addons.map(addon => addon.name).join(", ")}
@@ -101,7 +104,7 @@ export function PaymentPage() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="font-medium">${item.product.price.toFixed(2)}</p>
+                                <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
                                 {item.addons && item.addons.length > 0 && (
                                     <p className="text-sm text-gray-500">
                                         + ${item.addons.reduce((sum, addon) => sum + addon.price, 0).toFixed(2)}
@@ -114,7 +117,7 @@ export function PaymentPage() {
                         <span>Total</span>
                         <span>
                             ${cart.reduce((total, item) => {
-                                const itemTotal = item.product.price + (item.addons ? item.addons.reduce((sum, addon) => sum + addon.price, 0) : 0);
+                                const itemTotal = (item.product.price * item.quantity) + (item.addons ? item.addons.reduce((sum, addon) => sum + addon.price, 0) : 0);
                                 return total + itemTotal;
                             }, 0).toFixed(2)}
                         </span>

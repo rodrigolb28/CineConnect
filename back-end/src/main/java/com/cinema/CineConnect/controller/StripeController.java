@@ -32,23 +32,6 @@ public class StripeController {
         this.cartService = cartService;
     }
 
-    // Checkout Session
-    @PostMapping("/create-session")
-    public ResponseEntity<String> createCheckoutSession(
-            @RequestBody List<ProductRecord> cart,
-            @RequestParam String successUrl,
-            @RequestParam String cancelUrl) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userIdStr = authentication.getName();
-        UserRecordRoleName user = userRepository.findInfoById(UUID.fromString(userIdStr))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        String checkoutUrl = stripeService.createCheckoutSession(cart, successUrl, cancelUrl,
-                UUID.fromString(user.id()));
-        return ResponseEntity.ok(checkoutUrl);
-    }
-
     @PostMapping("/create-payment-intent")
     public ResponseEntity<String> createPaymentIntent(@RequestBody List<ProductRecord> cart) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
