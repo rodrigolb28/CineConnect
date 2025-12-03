@@ -18,6 +18,7 @@ public class Ticket extends Product {
     }
 
     public String getSeatNumber() {
+
         return seatNumber;
     }
 
