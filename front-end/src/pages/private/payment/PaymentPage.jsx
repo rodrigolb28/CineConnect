@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import api from "../../../api";
@@ -15,17 +15,24 @@ export function PaymentPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const { cart } = useCart();
+    const paymentIntentCreated = useRef(false);
 
     useEffect(() => {
-        // Create PaymentIntent as soon as the page loads
+        // Create PaymentIntent as soon as the page loads (only once)
         const createPaymentIntent = async () => {
             if (cart.length === 0) {
                 setIsLoading(false);
                 return;
             }
 
+            // Prevent duplicate payment intent creation
+            if (paymentIntentCreated.current) {
+                return;
+            }
+
             try {
                 setIsLoading(true);
+                paymentIntentCreated.current = true;
                 // Map cart to ProductRecord format expected by backend
                 const productRecords = cart.map(item => ({
                     productId: item.product.id,
@@ -51,6 +58,7 @@ export function PaymentPage() {
                 console.error("Error creating payment intent:", err);
                 setError("Failed to initialize payment. Please try again.");
                 setIsLoading(false);
+                paymentIntentCreated.current = false; // Reset on error to allow retry
             }
         };
 
@@ -88,7 +96,7 @@ export function PaymentPage() {
                         <div key={index} className="flex justify-between items-center border-b py-4 last:border-b-0">
                             <div className="flex items-center">
                                 {item.product.imageUrl && (
-                                    <img src={item.product.imageUrl} alt={item.product.name} className="w-16 h-16 object-cover rounded mr-4" />
+                                    <img src={`http://localhost:8080${item.product.imageUrl}`} alt={item.product.name} className="w-16 h-16 object-cover rounded mr-4" />
                                 )}
                                 <div>
                                     <h3 className="font-medium">{item.product.name}</h3>

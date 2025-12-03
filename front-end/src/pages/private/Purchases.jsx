@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Stack, Text, Badge, Group, Image } from "@mantine/core";
 import api from "../../api";
 
@@ -22,66 +22,80 @@ function UserPurchases() {
     }, []);
 
     return (
-        <Stack spacing="xl" p="md">
-            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>My Purchases</h1>
+        <Stack spacing="md" p="md">
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>My Purchases</h1>
             {purchases ? (
                 purchases.length === 0 ? (
                     <Text c="dimmed">You haven't made any purchases yet.</Text>
                 ) : (
                     purchases.map((purchase) => (
-                        <Card key={purchase.id} shadow="sm" padding="lg" radius="md" withBorder>
-                            <Card.Section withBorder inheritPadding py="xs">
-                                <Group position="apart">
-                                    <Group>
-                                        <Text fw={500}>Order #{purchase.id.substring(0, 8)}</Text>
-                                        <Badge color={purchase.status === 'PAID' || purchase.status === 'succeeded' ? 'green' : 'yellow'}>
-                                            {purchase.status}
-                                        </Badge>
-                                    </Group>
-                                    <Text c="dimmed" size="sm">
-                                        {new Date(purchase.createdAt).toLocaleDateString()} {new Date(purchase.createdAt).toLocaleTimeString()}
-                                    </Text>
+                        <Card key={purchase.id} shadow="sm" padding="sm" radius="md" withBorder>
+                            <Group position="apart" mb="xs">
+                                <Group spacing="xs">
+                                    <Text size="sm" fw={600}>#{purchase.id.substring(0, 8)}</Text>
+                                    <Badge size="sm" color={purchase.status === 'PAID' || purchase.status === 'succeeded' ? 'green' : 'yellow'}>
+                                        {purchase.status}
+                                    </Badge>
                                 </Group>
-                            </Card.Section>
+                                <Text c="dimmed" size="xs">
+                                    {new Date(purchase.createdAt).toLocaleDateString()} {new Date(purchase.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                            </Group>
 
-                            <Stack mt="md" spacing="sm">
-                                {purchase.items.map((item, index) => (
-                                    <Group key={index} align="flex-start" noWrap>
-                                        <Image
-                                            src={item.imageUrl || "https://placehold.co/40x40?text=No+Image"}
-                                            width={40}
-                                            height={40}
-                                            radius="md"
-                                            fit="contain"
-                                            alt={item.name}
-                                        />
-                                        <div style={{ flex: 1 }}>
-                                            <Text fw={500}>{item.name}</Text>
-                                            <Text size="sm" c="dimmed">
-                                                {item.quantity} x ${item.priceAtPurchase.toFixed(2)}
-                                            </Text>
-                                            {item.addons && item.addons.length > 0 && (
-                                                <Stack spacing={2} mt={4}>
-                                                    {item.addons.map((addon, idx) => (
-                                                        <Text key={idx} size="xs" c="dimmed" pl="xs" style={{ borderLeft: '2px solid #eee' }}>
-                                                            + {addon.name} (${addon.priceAtPurchase.toFixed(2)})
-                                                        </Text>
-                                                    ))}
-                                                </Stack>
-                                            )}
-                                        </div>
-                                        <Text fw={500}>
-                                            ${((item.priceAtPurchase * item.quantity) + (item.addons ? item.addons.reduce((sum, a) => sum + a.priceAtPurchase, 0) : 0)).toFixed(2)}
-                                        </Text>
-                                    </Group>
-                                ))}
-                            </Stack>
-
-                            <Card.Section withBorder inheritPadding py="xs" mt="md">
-                                <Group position="right">
-                                    <Text size="lg" fw={700}>Total: ${purchase.totalAmount.toFixed(2)}</Text>
-                                </Group>
-                            </Card.Section>
+                            <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid #e9ecef' }}>
+                                        <th style={{ textAlign: 'left', padding: '4px 8px', fontWeight: 500, color: '#868e96' }}></th>
+                                        <th style={{ textAlign: 'left', padding: '4px 8px', fontWeight: 500, color: '#868e96' }}>Item</th>
+                                        <th style={{ textAlign: 'center', padding: '4px 8px', fontWeight: 500, color: '#868e96' }}>Qty</th>
+                                        <th style={{ textAlign: 'right', padding: '4px 8px', fontWeight: 500, color: '#868e96' }}>Price</th>
+                                        <th style={{ textAlign: 'right', padding: '4px 8px', fontWeight: 500, color: '#868e96' }}>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {purchase.items.map((item, index) => (
+                                        <React.Fragment key={index}>
+                                            <tr style={{ borderBottom: '1px solid #f1f3f5' }}>
+                                                <td style={{ padding: '6px 8px' }}>
+                                                    <img
+                                                        src={item.imageUrl || "https://placehold.co/24x24?text=X"}
+                                                        alt={item.name}
+                                                        style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover' }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '6px 8px', fontWeight: 500 }}>{item.name}</td>
+                                                <td style={{ padding: '6px 8px', textAlign: 'center' }}>{item.quantity}</td>
+                                                <td style={{ padding: '6px 8px', textAlign: 'right' }}>${item.priceAtPurchase.toFixed(2)}</td>
+                                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 500 }}>
+                                                    ${(item.priceAtPurchase * item.quantity).toFixed(2)}
+                                                </td>
+                                            </tr>
+                                            {item.addons && item.addons.map((addon, addonIdx) => (
+                                                <tr key={`addon-${index}-${addonIdx}`} style={{ backgroundColor: '#f8f9fa' }}>
+                                                    <td style={{ padding: '4px 8px' }}></td>
+                                                    <td colSpan="2" style={{ padding: '4px 8px 4px 24px', fontSize: '0.8rem', color: '#868e96' }}>
+                                                        + {addon.name}
+                                                    </td>
+                                                    <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: '0.8rem', color: '#868e96' }}>
+                                                        ${addon.priceAtPurchase.toFixed(2)}
+                                                    </td>
+                                                    <td style={{ padding: '4px 8px', textAlign: 'right', fontSize: '0.8rem', color: '#868e96' }}>
+                                                        ${addon.priceAtPurchase.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr style={{ borderTop: '2px solid #dee2e6' }}>
+                                        <td colSpan="4" style={{ padding: '8px', textAlign: 'right', fontWeight: 600 }}>Total:</td>
+                                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: 700, fontSize: '1rem' }}>
+                                            ${purchase.totalAmount.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </Card>
                     ))
                 )

@@ -37,11 +37,11 @@ function CartSidebar({ opened, onClose }) {
                             <Box key={item.id} style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                                 <Group align="flex-start" noWrap>
                                     <Image
-                                        src={item.product.imageUrl || "https://placehold.co/100x100?text=No+Image"}
+                                        src={item.product.imageUrl ? `http://localhost:8080${item.product.imageUrl}` : "https://placehold.co/100x100?text=No+Image"}
                                         w={60}
                                         h={60}
                                         radius="sm"
-                                        fit="contain"
+                                        fit="cover"
                                         style={{ objectPosition: 'center' }}
                                         alt={item.product.name}
                                     />

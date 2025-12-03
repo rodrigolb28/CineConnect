@@ -85,16 +85,16 @@ INSERT INTO product_types (id, name, description) VALUES
                                                       (gen_random_uuid(), 'Addon', 'Extra toppings or add-ons');
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Large Popcorn', 25.00, id, 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&q=80&w=300' FROM product_types WHERE name = 'Food';
+SELECT 'Large Popcorn', 25.00, id, '/uploads/pop_big.png' FROM product_types WHERE name = 'Food';
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Medium Popcorn', 20.00, id, 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&q=80&w=300' FROM product_types WHERE name = 'Food';
+SELECT 'Medium Popcorn', 20.00, id, '/uploads/pop_medium.png' FROM product_types WHERE name = 'Food';
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Chocolate Bar', 12.00, id, 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&q=80&w=300' FROM product_types WHERE name = 'Food';
+SELECT 'Chocolate Bar', 12.00, id, '/uploads/chocolate_bar.png' FROM product_types WHERE name = 'Food';
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Large Soda', 18.00, id, 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=300' FROM product_types WHERE name = 'Drink';
+SELECT 'Large Soda', 18.00, id, '/uploads/soda.png' FROM product_types WHERE name = 'Drink';
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Water Bottle', 8.00, id, 'https://images.unsplash.com/photo-1564414297-701a05a0551e?auto=format&fit=crop&q=80&w=300' FROM product_types WHERE name = 'Drink';
+SELECT 'Water Bottle', 8.00, id, '/uploads/water_bottle.png' FROM product_types WHERE name = 'Drink';
