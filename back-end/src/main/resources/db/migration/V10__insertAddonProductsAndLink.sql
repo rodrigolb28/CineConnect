@@ -1,9 +1,9 @@
 -- Insert Addon products
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Butter', 2.00, id, 'https://placehold.co/100x100?text=Butter' FROM product_types WHERE name = 'Addon';
+SELECT 'Butter', 2.00, id, '/uploads/butter.png' FROM product_types WHERE name = 'Addon';
 
 INSERT INTO products (name, price, type_id, image_url)
-SELECT 'Salt', 0.50, id, 'https://placehold.co/100x100?text=Salt' FROM product_types WHERE name = 'Addon';
+SELECT 'Salt', 0.50, id, '/uploads/salt.png' FROM product_types WHERE name = 'Addon';
 
 -- Link new Addons to Food products
 INSERT INTO product_addons (product_id, addon_id)

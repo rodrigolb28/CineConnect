@@ -84,13 +84,13 @@ function StorePage() {
                     <Card key={product.productId} shadow="sm" padding="lg" radius="md" withBorder>
                         <Card.Section>
                             <Image
-                                src={product.imageUrl || "https://placehold.co/300x200?text=No+Image"}
-                                h={160}
+                                src={product.imageUrl ? `http://localhost:8080${product.imageUrl}` : "https://placehold.co/300x200?text=No+Image"}
+                                h={200}
                                 w="100%"
-                                fit="contain"
-                                bg="gray.0"
+                                fit="cover"
                                 alt={product.name}
                                 fallbackSrc="https://placehold.co/300x200?text=No+Image"
+                                style={{ backgroundColor: '#fff' }}
                             />
                         </Card.Section>
 
